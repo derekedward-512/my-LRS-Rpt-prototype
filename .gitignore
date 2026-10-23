@@ -1,0 +1,8 @@
+node_modules
+dist
+docs-site/build
+docs-site/.docusaurus
+.env
+.env.*
+*.log
+.DS_Store

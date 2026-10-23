@@ -1,0 +1,26 @@
+# Catches type errors and broken docs before they reach the deploy,
+# where they'd fail the Docker build instead.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            docs-site/package-lock.json
+      # postinstall installs docs-site/ too, so `npm run build` covers both.
+      - run: npm ci
+      - run: npm run build

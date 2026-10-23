@@ -1,0 +1,26 @@
+/* Modus global styles must load before Tailwind so utilities can override, not fight, them. */
+@import '@trimble-oss/moduswebcomponents/modus-wc-styles.css';
+@import 'tailwindcss';
+
+/* Map Modus tokens into Tailwind so `bg-base-page`, `text-primary` etc. stay on
+   the design system instead of drifting into raw hex. Colors live on Modus. */
+@theme inline {
+  --color-base-page: var(--modus-wc-color-base-page);
+  --color-base-100: var(--modus-wc-color-base-100);
+  --color-base-200: var(--modus-wc-color-base-200);
+  --color-base-300: var(--modus-wc-color-base-300);
+  --color-base-content: var(--modus-wc-color-base-content);
+  --color-primary: var(--modus-wc-color-primary);
+  --color-success: var(--modus-wc-color-success);
+  --color-warning: var(--modus-wc-color-warning);
+  --color-danger: var(--modus-wc-color-error);
+
+  --font-sans: 'Open Sans', system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: var(--modus-wc-color-base-page);
+  color: var(--modus-wc-color-base-content);
+  font-family: 'Open Sans', system-ui, sans-serif;
+}

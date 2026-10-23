@@ -1,0 +1,82 @@
+# Publishes a live demo of the prototype (and its docs) to GitHub Pages, so people
+# can see what the template looks like before cloning it.
+#
+# This replaces GitHub's default "legacy" Pages build, which serves the repo root
+# through Jekyll — that renders a blank page here, because the root index.html is
+# Vite's dev entry and loads src/main.tsx, which a browser can't execute.
+#
+# Requires Settings → Pages → Source: "GitHub Actions".
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two Pages deploys race; let a newer commit supersede an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            docs-site/package-lock.json
+
+      # Resolves the URL this site will be served from. A project site lives at
+      # /<repo>/, a private Pages site at the root of its own subdomain — the
+      # base_path output covers both, so nothing is hardcoded.
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - run: npm ci
+
+      - name: Build prototype
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}/
+        run: npm run build:app
+
+      - name: Build docs
+        env:
+          DOCS_BASE_URL: ${{ steps.pages.outputs.base_path }}/docs/
+        run: npm run build:docs
+
+      - name: Assemble the site
+        run: |
+          mkdir -p dist/docs
+          cp -r docs-site/build/. dist/docs/
+          # Pages has no server-side fallback, so a deep link into a client-side
+          # route would 404. Serving index.html as the 404 page hands those back
+          # to the React router. Docusaurus emits real pages, so /docs is unaffected.
+          cp dist/index.html dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

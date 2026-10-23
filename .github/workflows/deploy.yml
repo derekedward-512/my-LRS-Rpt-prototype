@@ -1,0 +1,73 @@
+# Deploys to Cloud Run on every push to main (source deploy — Cloud Build builds the Dockerfile).
+#
+# Until it's configured this workflow skips itself, so a fresh clone stays green.
+# To turn it on, do the one-time setup in docs/DEPLOYMENT.md:
+#   1. Replace SERVICE and PROJECT_ID below with your own.
+#   2. Bootstrap the GCP project and add the GCP_SA_KEY secret to this repo.
+
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-cloud-run
+  cancel-in-progress: false
+
+env:
+  SERVICE: CHANGE_ME_SERVICE
+  PROJECT_ID: CHANGE_ME_PROJECT
+  REGION: us-central1
+
+jobs:
+  # A job-level `if` can't read `env`, so the check lives in its own job and the
+  # deploy gates on its output.
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        run: |
+          if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "CHANGE_ME_PROJECT" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Cloud Run deploy skipped::This repo has not been pointed at a GCP project yet. Set SERVICE and PROJECT_ID in .github/workflows/deploy.yml and add the GCP_SA_KEY secret — see docs/DEPLOYMENT.md."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: check
+    if: needs.check.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --source . \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --allow-unauthenticated \
+            --min-instances 0 \
+            --max-instances 1 \
+            --set-env-vars="NODE_ENV=production" \
+            --quiet
+
+      - name: Print service URL
+        run: |
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --format 'value(status.url)'

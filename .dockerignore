@@ -1,0 +1,10 @@
+node_modules
+docs-site/node_modules
+dist
+docs-site/build
+docs-site/.docusaurus
+.env
+.env.*
+.git
+.github
+*.log

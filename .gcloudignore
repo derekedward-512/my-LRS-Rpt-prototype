@@ -1,0 +1,13 @@
+# What gets uploaded to Cloud Build for `gcloud run deploy --source .`.
+# Does NOT inherit .gitignore. The Dockerfile rebuilds deps and both builds in the cloud.
+
+node_modules
+docs-site/node_modules
+dist
+docs-site/build
+docs-site/.docusaurus
+.env
+.env.*
+.git
+.github
+*.log
