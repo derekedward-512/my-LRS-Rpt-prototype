@@ -1,6 +1,6 @@
 # Vite client + Docusaurus docs + Express static server → single container on port 8080.
 
-FROM node:22-slim AS builder
+FROM node:24-slim AS builder
 WORKDIR /app
 
 # Both manifests before the install, so the root postinstall (which runs
@@ -16,7 +16,7 @@ COPY . .
 ENV DOCS_BASE_URL=/docs/
 RUN npm run build
 
-FROM node:22-slim
+FROM node:24-slim
 WORKDIR /app
 
 # --ignore-scripts skips postinstall, which would otherwise pull the whole
