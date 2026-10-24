@@ -24,12 +24,15 @@ export default function AppShell() {
   return (
     <div className="flex min-h-dvh flex-col">
       <ModusWcNavbar userCard={USER} visibility={VISIBILITY}>
+        <span slot="start" className="ps-2 text-sm font-semibold">
+          Unity® Respond
+        </span>
         {/* A plain anchor, not react-router's <Link>: /docs is served by Express,
             not by this SPA, so client-side routing would 404 into the prototype. */}
         <a
           slot="end"
           href={`${import.meta.env.BASE_URL}docs/`}
-          className="px-3 text-sm font-semibold text-primary no-underline"
+          className="no-print px-3 text-sm font-semibold text-primary no-underline"
         >
           Docs
         </a>
